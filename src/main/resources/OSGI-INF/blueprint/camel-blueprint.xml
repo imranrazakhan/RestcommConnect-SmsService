@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+    xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0"
+    xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="          http://www.osgi.org/xmlns/blueprint/v1.0.0                    https://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+    <bean
+        class="org.restcomm.connect.http.processors.MySecurityTokenInjector" id="securityTokenInjector"/>
+    <bean
+        class="org.restcomm.connect.http.processors.ValidateAndNormalizeSmsRequest" id="validateAndNormalizeSmsRequest"/>
+    <!-- 
+         Lets connect the Camel ActiveMQ component to the broker.
+    -->
+    <bean class="org.apache.activemq.camel.component.ActiveMQComponent" id="activemq">
+        <property name="brokerURL" value="tcp://localhost:61616"/>
+        <property name="userName" value="admin"/>
+        <property name="password" value="admin"/>
+        <property name="usePooledConnection" value="false"/>
+    </bean>
+    <bean
+        class="org.apache.camel.component.shiro.security.ShiroSecurityPolicy" id="shiroSecurityPolicy">
+        <argument value="/Users/imran/shiro.ini"/>
+    </bean>
+    <camelContext id="SmsService-context"
+        xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://com.mycompany/examples/order">
+        <route id="ReceiveSmsRequest">
+            <from id="_from1" uri="cxfrs://http://127.0.0.1:9090/restcomm/2012-04-24/?resourceClasses=org.restcomm.connect.http.SmsMessages"/>
+            <process id="securityTokenInjectorID" ref="securityTokenInjector"/>
+            <policy id="shiroSecurityPolicyID" ref="shiroSecurityPolicy">
+                <choice id="decideOperation">
+                    <when id="_when1">
+                        <simple>${in.header.operationName} == 'putSmsMessage'</simple>
+                        <throttle id="100msg/sec">
+                            <!-- throttle 100 messages per sec -->
+                            <constant>3</constant>
+                            <!--  <to id="sendSmsMessage" pattern="InOnly" uri="activemq:queue:sendSmsMessages"/> -->
+                            <process
+                                id="validateAndNormalizeSmsRequestID" ref="validateAndNormalizeSmsRequest"/>
+                            <to id="sendSmsMessage" uri="activemq:queue:sendSmsMessages"/>
+                            <log id="SavedInQueue" message="message saved in queue"/>
+                        </throttle>
+                    </when>
+                    <when id="_when2">
+                        <simple>${in.header.operationName} == 'getSmsMessages'</simple>
+                        <transform id="_transform1">
+                            <simple>Not implemented Yet</simple>
+                        </transform>
+                    </when>
+                </choice>
+            </policy>
+        </route>
+    </camelContext>
+</blueprint>
