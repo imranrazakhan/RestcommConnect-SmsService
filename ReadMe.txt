@@ -23,6 +23,7 @@ To run this project on JBoss Fuse shell :
     - install dependencies from Fuse shell:
 	
 	  features:install activemq-camel
+	  features:install camel-gson
 
     - install the bundle from Fuse shell
 

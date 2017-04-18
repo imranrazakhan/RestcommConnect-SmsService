@@ -7,6 +7,7 @@
         class="org.restcomm.connect.http.processors.MySecurityTokenInjector" id="securityTokenInjector"/>
     <bean
         class="org.restcomm.connect.http.processors.ValidateAndNormalizeSmsRequest" id="validateAndNormalizeSmsRequest"/>
+    <bean class="org.restcomm.connect.http.processors.GsonJaxRsProvider" id="jsonProvider"/>
     <!-- 
          Lets connect the Camel ActiveMQ component to the broker.
     -->
@@ -20,10 +21,9 @@
         class="org.apache.camel.component.shiro.security.ShiroSecurityPolicy" id="shiroSecurityPolicy">
         <argument value="/Users/imran/shiro.ini"/>
     </bean>
-    <camelContext id="SmsService-context"
-        xmlns="http://camel.apache.org/schema/blueprint" xmlns:order="http://com.mycompany/examples/order">
+    <camelContext id="SmsService-context" xmlns="http://camel.apache.org/schema/blueprint">
         <route id="ReceiveSmsRequest">
-            <from id="_from1" uri="cxfrs://http://127.0.0.1:9090/restcomm/2012-04-24/?resourceClasses=org.restcomm.connect.http.SmsMessages"/>
+            <from id="_from1" uri="cxfrs://http://127.0.0.1:9090/restcomm/2012-04-24/?resourceClasses=org.restcomm.connect.http.SmsMessages&amp;providers=jsonProvider"/>
             <process id="securityTokenInjectorID" ref="securityTokenInjector"/>
             <policy id="shiroSecurityPolicyID" ref="shiroSecurityPolicy">
                 <choice id="decideOperation">
