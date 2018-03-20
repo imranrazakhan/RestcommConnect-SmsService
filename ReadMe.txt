@@ -45,4 +45,5 @@ restConfiguration().component("jetty").host("localhost").port(9090);
 				
 rest("/restcomm/2012-04-24").consumes("application/x-www-form-urlencoded,applicat/json")
 .post("/Accounts/{AccountSid}/SMS/Messages/").to("direct:add")
+exchange.getOut().setBody( Response.status(Response.Status.NO_CONTENT).build() );
 			
